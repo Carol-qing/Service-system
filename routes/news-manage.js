@@ -56,7 +56,7 @@ router.get('/', function(req, res) {
       }
     },
     {
-      $limit: 10
+      $limit: 5
     }
   ])
   .then((r) => {
@@ -128,8 +128,8 @@ router.get('/homelist', function(req, res) {
  * 草稿箱
  * /news?author=${username}&auditState=0&_expand=category
  */
-router.get('/:username', function(req, res) {
-  Artcles.find({ author: req.params.username, auditState: 0})
+router.get('/:uid', function(req, res) {
+  Artcles.find({ userId: req.params.uid, auditState: 0})
   .populate("categoryId")//关联文章类型列表
   .then((r) => {
     res.json(r)
@@ -146,36 +146,51 @@ router.get('/:username', function(req, res) {
  * 审核列表
  * /news?author=${username}&auditState=0&_expand=category
  */
-router.get('/list/:username/:roleType/:region', function(req, res) {
+router.get('/list/:uid/:roleType/:region', function(req, res) {
   console.log(req.params);
   if(req.params.roleType === '1'){
     Artcles.find().populate("categoryId").sort({"auditState":1})
     .then((r) => {
       res.json(r)
       return 
-    })
-    
+    }) 
   }else if (req.params.roleType === '2'){
-    console.log('222');
     Artcles.find({ region: req.params.region}).populate("categoryId").sort({"auditState":1})
     .then((r) => {
       res.json(r)
     })
   }else {
-    Artcles.find({ author: req.params.username}).populate("categoryId").sort({"auditState":1})
+    Artcles.find({ userId: req.params.uid}).populate("categoryId").sort({"auditState":1})
     .then((r) => {
       res.json(r)
     })
-  }
-  
+  } 
+})
+
+/**
+ * 根据文章状态获取文章列表(审核文章)
+ */
+router.get('/aduit/:auditState', function(req, res) {
+  Artcles.find({ auditState: 1})
+  .populate("categoryId")
+  .populate("roleId") 
+  .then((r) => {
+    res.json(r)
+  })
+  .catch((err)=> {
+    res.json({
+      code: 0,
+      msg: '获取文章列表失败'
+    })
+  })
 })
 
 /**
  * 个人文章审核状态
  */
-router.get('/statelist/:username', function(req, res) {
+router.get('/statelist/:uid', function(req, res) {
   console.log(req.params);
-    Artcles.find({ author: req.params.username}).populate("categoryId").sort({"auditState":1})
+    Artcles.find({ userId: req.params.uid}).populate("categoryId").sort({"auditState":1})
     .then((r) => {
       res.json(r)
     })
@@ -184,9 +199,9 @@ router.get('/statelist/:username', function(req, res) {
 /**
  * 发布管理
  */
-router.get('/publish/:username/:auditState', function(req, res) {
+router.get('/publish/:uid/:auditState', function(req, res) {
   console.log(req.params);
-  Artcles.find({ author: req.params.username, auditState: req.params.auditState})
+  Artcles.find({ userId: req.params.uid, auditState: req.params.auditState})
   .populate("categoryId")//关联文章类型列表
   .then((r) => {
     console.log('11fds');
@@ -202,7 +217,7 @@ router.get('/publish/:username/:auditState', function(req, res) {
  * 根据用户id获取文章列表
  */
 router.get('/:uid', function(req, res) {
-  Artcles.find({ _id: req.params.uid})
+  Artcles.find({ userId: req.params.uid})
   .populate("categoryId")
   .populate("roleId")
   .then((r) => {
@@ -217,37 +232,19 @@ router.get('/:uid', function(req, res) {
 })
 
 /**
- * 根据文章状态获取文章列表(审核文章)
- */
-router.get('/aduit/:auditState', function(req, res) {
-  Artcles.find({ auditState: 1})
-  .populate("categoryId")
-  .populate("roleId")
-  .then((r) => {
-    res.json(r)
-  })
-  .catch((err)=> {
-    res.json({
-      code: 0,
-      msg: '获取文章列表失败'
-    })
-  })
-})
-
-/**
  * 根据文章id获取文章详情信息
  * /news/${props.match.params.id}?_expand=category&_expand=role
  */
 router.get('/preview/:aid', function(req, res, next) {
+  console.log('dd',req.params.aid);
   Artcles.findByIdAndUpdate(
     req.params.aid,
-    { $inc:{ views:1 }}, //views+1
+    { $inc:{ view: 1 }}, //views+1
     { new: true } //查询最新的结果
     ) 
-    .populate("categoryId")
-    .populate("roleId")
     .then((r) => {
       res.json(r)
+      console.log(r);
     })
     .catch((err)=> {
       res.json({

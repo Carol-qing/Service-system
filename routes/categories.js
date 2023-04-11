@@ -21,7 +21,7 @@ router.get('/', function(req, res, next) {
  */
 router.patch('/:cid', function(req, res, next) {
     console.log(req.params)
-    let r = Categories.findByIdAndUpdate(
+    Categories.findByIdAndUpdate(
       req.params.cid,
       { ...req.body },
       { new: true}

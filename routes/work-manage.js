@@ -33,10 +33,11 @@ router.post('/leave', function(req, res) {
 router.get('/:state', function(req, res) {
   Leave.find({ auditState: req.params.state})
   .populate("categoryId")
+  .populate("roleId")
   .then((r) => {
     res.json(r)
   })
-  .catch((err)=> {
+  .catch(()=> {
     res.json({
       code: 0,
       msg: '获取文章列表失败'

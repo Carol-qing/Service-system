@@ -28,7 +28,7 @@ router.post('/', function(req, res) {
 
 /**
  * 获取打卡信息
- * /record/${_id}
+ * 
  */
 router.get('/:date/:uid', function(req, res) {
   Record.findOneAndUpdate(
@@ -38,6 +38,33 @@ router.get('/:date/:uid', function(req, res) {
     { ...req.body },
     {new: true}
   )
+  .then((r) => {
+    res.json(r)
+  })
+  .catch((err)=> {
+    res.json({
+      code: 0,
+      msg: '失败'
+    })
+  })
+})
+
+router.get('/all/:date/:uid', function(req, res) {
+  Record.aggregate([
+    {
+      $match:{
+        "date":req.params.date
+      }
+    },
+    {
+      $lookup: {
+          from: "users", 
+          localField: "userId", 
+          foreignField: "_id", 
+          as: "data"
+      }
+    }
+  ])
   .then((r) => {
     res.json(r)
   })
@@ -65,6 +92,7 @@ router.get('/:uid', function(req, res) {
     })
   })
 })
+
 /**
  * 根据日期和用户id修改状态
  */
